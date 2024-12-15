@@ -58,7 +58,10 @@ Detailed documentation covering the design, development, and testing process.
  					 
   
 **Component**  **Description** **Quantity** 
+
 Camera            HD webcam        1 
+
 Servo Motor       SG90 Servo Motor 1 
+
 Microcontroller    Raspberry Pi 4  1 
  
