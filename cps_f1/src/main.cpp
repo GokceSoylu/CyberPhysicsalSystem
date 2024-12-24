@@ -1,52 +1,67 @@
 #include <Arduino.h>
+#include <Wire.h>
 #include <BLEMouse.h>
 
 // BLE fare tanımı
 BleMouse bleMouse;
 
-// Zamanlayıcı için değişkenler
-unsigned long lastActionTime = 0;
-const unsigned long actionInterval = 500; // Hareketler arası bekleme süresi (ms)
+// MPU-6050 I2C adresi
+const int MPU_ADDR = 0x68;
 
-void drawS();
-void drawO();
-void drawY();
-void drawL();
-void drawU();
+// MPU-6050 veri depolama
+int16_t accelX, accelY, accelZ;
+int16_t gyroX, gyroY, gyroZ;
+
+// Hareket eşikleri
+const int sensitivity = 1000;      // MPU-6050 duyarlılık katsayısı
+const int movementThreshold = 200; // Fare hareketi için eşik
 
 void setup()
 {
   // Seri iletişim başlatma
   Serial.begin(115200);
-  Serial.println("BLE Mouse başlatılıyor...");
+  Serial.println("MPU-6050 ve BLE Mouse başlatılıyor...");
 
   // BLE fareyi başlat
   bleMouse.begin();
-  bleMouse.setBatteryLevel(100); // Pil seviyesi: %100
+
+  // MPU-6050 başlatma
+  Wire.begin();
+  Wire.beginTransmission(MPU_ADDR);
+  Wire.write(0x6B); // Güç yönetimi kaydını seç
+  Wire.write(0x00); // Cihazı uyandır
+  Wire.endTransmission();
 }
 
 void loop()
 {
   if (bleMouse.isConnected())
   {
-    Serial.println("BLE bağlı, fare hareketi yapılıyor...");
+    // MPU-6050'den veri oku
+    Wire.beginTransmission(MPU_ADDR);
+    Wire.write(0x3B); // Veri başlangıç adresi
+    Wire.endTransmission(false);
+    Wire.requestFrom(MPU_ADDR, 14, true);
 
-    // "SOYLU" yazısını çiz
-    drawS();
-    delay(actionInterval);
-    drawO();
-    delay(actionInterval);
-    drawY();
-    delay(actionInterval);
-    drawL();
-    delay(actionInterval);
-    drawU();
+    accelX = Wire.read() << 8 | Wire.read();
+    accelY = Wire.read() << 8 | Wire.read();
+    accelZ = Wire.read() << 8 | Wire.read();
+    gyroX = Wire.read() << 8 | Wire.read();
+    gyroY = Wire.read() << 8 | Wire.read();
+    gyroZ = Wire.read() << 8 | Wire.read();
 
-    // Çizim tamamlandıktan sonra bekle
-    while (true)
+    // Hareket hesaplaması
+    int moveX = map(accelX, -sensitivity, sensitivity, -10, 10);
+    int moveY = map(accelY, -sensitivity, sensitivity, -10, 10);
+
+    // Hareket eşiklerini kontrol et
+    if (abs(moveX) > movementThreshold || abs(moveY) > movementThreshold)
     {
-      Serial.println("Çizim tamamlandı, tekrar başlatmak için resetleyin.");
-      delay(5000);
+      bleMouse.move(moveX, -moveY); // BLE fareyi hareket ettir
+      Serial.print("Hareket: X=");
+      Serial.print(moveX);
+      Serial.print(", Y=");
+      Serial.println(moveY);
     }
   }
   else
@@ -54,68 +69,4 @@ void loop()
     Serial.println("BLE bağlantısı bekleniyor...");
     delay(1000);
   }
-}
-
-void drawS()
-{
-  Serial.println("S harfi çiziliyor...");
-  bleMouse.press(MOUSE_LEFT);
-  bleMouse.move(10, 0); // Sağ
-  delay(100);
-  bleMouse.move(0, 10); // Aşağı
-  delay(100);
-  bleMouse.move(-10, 0); // Sol
-  delay(100);
-  bleMouse.move(0, 10); // Aşağı
-  delay(100);
-  bleMouse.move(10, 0); // Sağ
-  bleMouse.release(MOUSE_LEFT);
-}
-
-void drawO()
-{
-  Serial.println("O harfi çiziliyor...");
-  bleMouse.press(MOUSE_LEFT);
-  bleMouse.move(10, 0); // Sağ
-  delay(100);
-  bleMouse.move(0, 20); // Aşağı
-  delay(100);
-  bleMouse.move(-10, 0); // Sol
-  delay(100);
-  bleMouse.move(0, -20); // Yukarı
-  bleMouse.release(MOUSE_LEFT);
-}
-
-void drawY()
-{
-  Serial.println("Y harfi çiziliyor...");
-  bleMouse.press(MOUSE_LEFT);
-  bleMouse.move(5, 10); // Sağ çapraz aşağı
-  delay(100);
-  bleMouse.move(5, -10); // Sağ çapraz yukarı
-  delay(100);
-  bleMouse.move(0, 10); // Dikey aşağı
-  bleMouse.release(MOUSE_LEFT);
-}
-
-void drawL()
-{
-  Serial.println("L harfi çiziliyor...");
-  bleMouse.press(MOUSE_LEFT);
-  bleMouse.move(0, 20); // Dikey aşağı
-  delay(100);
-  bleMouse.move(10, 0); // Sağ
-  bleMouse.release(MOUSE_LEFT);
-}
-
-void drawU()
-{
-  Serial.println("U harfi çiziliyor...");
-  bleMouse.press(MOUSE_LEFT);
-  bleMouse.move(0, 20); // Dikey aşağı
-  delay(100);
-  bleMouse.move(10, 0); // Sağ
-  delay(100);
-  bleMouse.move(0, -20); // Yukarı
-  bleMouse.release(MOUSE_LEFT);
 }
