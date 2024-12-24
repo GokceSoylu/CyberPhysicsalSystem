@@ -33,7 +33,7 @@ SDA (MPU-6050) → GPIO 21 (ESP32)
 Use a breadboard and jumper wires to establish connections. 
 Power Supply: 
 Ensure the ESP32 is powered through a USB connection to the computer. 
-3.2 Software Implementation 
+### Software Implementation 
  https://github.com/GokceSoylu/CyberPhysicsalSystem/tree/main/cps_f1 
 
 ## Results and Observations 
