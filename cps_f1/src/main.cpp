@@ -12,8 +12,8 @@ const int MPU_ADDR = 0x68;
 int16_t accelX, accelY, accelZ;
 
 // Hareket eşikleri
-const int sensitivity = 500;      // Duyarlılık
-const int movementThreshold = 50; // Fare hareket eşiği
+const int sensitivity = 2000;     // Duyarlılık
+const int movementThreshold = 30; // Fare hareket eşiği
 
 void setup()
 {
@@ -67,8 +67,9 @@ void loop()
     Serial.println(accelZ);
 
     // Hareket hesaplama
-    int moveX = map(accelX, -sensitivity, sensitivity, -10, 10);
-    int moveY = map(accelY, -sensitivity, sensitivity, -10, 10);
+    float scaleFactor = 0.8; // Hareketi %50 yavaşlat
+    int moveX = map(accelX, -sensitivity, sensitivity, -10, 10) * scaleFactor;
+    int moveY = map(accelY, -sensitivity, sensitivity, -10, 10) * scaleFactor;
 
     // Hareket eşiğini kontrol et
     if (abs(moveX) > movementThreshold || abs(moveY) > movementThreshold)
@@ -86,55 +87,3 @@ void loop()
     delay(1000);
   }
 }
-
-// void setup()
-// {
-//   Serial.begin(115200);
-//   Serial.println("MPU-6050 testi başlatılıyor...");
-
-//   // MPU-6050 başlatma
-//   Wire.begin();
-//   Wire.beginTransmission(MPU_ADDR);
-//   Wire.write(0x6B); // Güç yönetimi kaydını seç
-//   Wire.write(0x00); // Cihazı uyandır
-//   Wire.endTransmission();
-
-//   // MPU-6050'nin çalışıp çalışmadığını test edin
-//   Wire.beginTransmission(MPU_ADDR);
-//   if (Wire.endTransmission() != 0)
-//   {
-//     Serial.println("MPU-6050 algılanamadı!");
-//     while (1)
-//       ; // Sonsuza kadar bekle
-//   }
-//   else
-//   {
-//     Serial.println("MPU-6050 başarıyla başlatıldı!");
-//   }
-// }
-
-// void loop()
-// {
-//   // Boş bırakılabilir
-// }
-
-// #include <BLEDevice.h>
-// #include <BLEUtils.h>
-// #include <BLEServer.h>
-
-// void setup()
-// {
-//   Serial.begin(115200);
-//   Serial.println("BLE başlatılıyor...");
-
-//   // BLE başlat
-//   BLEDevice::init("ESP32_Test");
-//   BLEServer *pServer = BLEDevice::createServer();
-
-//   Serial.println("BLE başlatıldı ve yayında!");
-// }
-
-// void loop()
-// {
-//   delay(1000);
-// }
